@@ -2,124 +2,73 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gravity Station — 題目與 Python 程式</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gravity Calculation HW 8-2</title>
   <style>
-    body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial;max-width:980px;margin:24px auto;padding:0 18px;color:#111}
-    h1,h2{color:#0b3}
-    pre{background:#f6f8fa;border:1px solid #e1e4e8;padding:12px;overflow:auto}
-    .meta{font-size:90%;color:#444}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    button{background:#0366d6;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
-    a.button{display:inline-block;text-decoration:none}
-    footer{margin-top:24px;font-size:90%;color:#555}
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background: #003366; color: #fff; padding: 20px; text-align: center; }
+    main { max-width: 900px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+    h1, h2 { color: #003366; }
+    pre { background: #eee; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    .code-block { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; }
+    footer { text-align: center; color: #666; margin-top: 40px; padding: 20px; }
+    a.download { display: inline-block; padding: 10px 16px; background: #003366; color: #fff; text-decoration: none; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h1>Problem 8-2 — Gravity station 計算</h1>
-  <section>
-    <h2>題目 (摘錄)</h2>
-    <p>Given the following data for a gravity station:</p>
-    <ul>
-      <li>Latitude: 48.1195° N</li>
-      <li>Longitude: 12.1878° E</li>
-      <li>Elevation: 487.9 m</li>
-      <li>Observed gravity: 980,717.39 mGal</li>
-    </ul>
-    <p>a) Calculate the: i) theoretical gravity; ii) free-air correction; iii) Bouguer correction; iv) free-air gravity anomaly; and v) Bouguer gravity anomaly.</p>
-    <p>b) Suppose the station had exactly the same latitude, longitude and observed gravity, but it was located on the surface of the ocean, over a water depth of 487.9 m. Recompute the free-air and Bouguer gravity anomalies.</p>
-  </section>
+<header>
+  <h1>Gravity Calculation Homework 8-2</h1>
+  <p>Based on GRS80 gravity model & Bouguer corrections</p>
+</header>
 
-  <section>
-    <h2>Python 程式 (可下載並執行)</h2>
-    <p class="meta">說明：此程式使用常見的重力修正公式（GRS80 準則近似式、自由空氣修正和簡單 Bouguer slab 修正）。密度預設岩石 2670 kg/m³；海水情況以 1000 kg/m³ 處理。</p>
+<main>
+  <h2>Problem Description</h2>
+  <p>Given a gravity station with the following properties:</p>
+  <ul>
+    <li>Latitude: 48.1195° N</li>
+    <li>Longitude: 12.1878° E</li>
+    <li>Elevation: 487.9 m</li>
+    <li>Observed gravity: 980,717.39 mGal</li>
+  </ul>
+  <p>Compute theoretical gravity, free-air correction, Bouguer correction, free-air anomaly, and Bouguer anomaly.</p>
 
-    <pre id="pycode">#!/usr/bin/env python3
-"""
-Gravity corrections for Problem 8-2
-Outputs: theoretical gravity (mGal), free-air correction (mGal),
-Bouguer correction (mGal), free-air anomaly (mGal), Bouguer anomaly (mGal)
-"""
+  <h2>Python Code</h2>
+  <pre class="code-block">#!/usr/bin/env python3
 import math
 
 def theoretical_gravity(lat_deg):
-    # GRS80 normal gravity formula (Somigliana-like approximation)
     phi = math.radians(lat_deg)
-    g0 = 978032.677  # mGal, nominal for GRS80 (value depends on unit choices)
-    # Somigliana coefficients (approximate)
-    g = g0 * (1 + 0.0053024 * math.sin(phi)**2 - 0.0000058 * math.sin(2*phi)**2)
+    g0 = 978032.677
+    g = g0 * (1 + 0.0053024*math.sin(phi)**2 - 0.0000058*math.sin(2*phi)**2)
     return g
 
-
 def free_air_correction(h_m):
-    # standard free-air gradient ~ 0.3086 mGal per meter
     return 0.3086 * h_m
 
-
 def bouguer_correction(h_m, density_kg_m3=2670):
-    # Simple Bouguer slab: 2 * pi * G * rho * h, expressed in mGal
-    # Factor 0.04193 approximates 2*pi*G in units converting to mGal when rho in g/cm3
-    # More common simplified formula: 0.04193 * rho(g/cm3) * h(m)
     rho_g_cm3 = density_kg_m3 / 1000.0
     return 0.04193 * rho_g_cm3 * h_m
-
 
 def compute_all(lat_deg, h_m, g_obs_mgal, rock_density=2670):
     g_th = theoretical_gravity(lat_deg)
     FAC = free_air_correction(h_m)
-    BC_rock = bouguer_correction(h_m, rock_density)
-    # anomalies: observed + FAC - theoretical  (free-air anomaly)
+    BC = bouguer_correction(h_m, rock_density)
     free_air_anomaly = g_obs_mgal + FAC - g_th
-    bouguer_anomaly = g_obs_mgal + FAC - BC_rock - g_th
-    return {
-        'g_theoretical': g_th,
-        'free_air_correction': FAC,
-        'bouguer_correction_rock': BC_rock,
-        'free_air_anomaly': free_air_anomaly,
-        'bouguer_anomaly_rock': bouguer_anomaly
-    }
+    bouguer_anomaly = g_obs_mgal + FAC - BC - g_th
+    return g_th, FAC, BC, free_air_anomaly, bouguer_anomaly
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lat = 48.1195
     h = 487.9
     g_obs = 980717.39
-    results_land = compute_all(lat, h, g_obs, rock_density=2670)
-    results_ocean = compute_all(lat, h, g_obs, rock_density=1000)  # water density
+    print(compute_all(lat, h, g_obs))</pre>
 
-    print('Results (land station):')
-    for k,v in results_land.items():
-        print(f'{k:30s}: {v:12.4f}')
+  <p><a class="download" href="gravity_problem_8-2.py">Download Python Script</a></p>
+</main>
 
-    print('\nResults (station over water, water density used in Bouguer):')
-    for k,v in results_ocean.items():
-        print(f'{k:30s}: {v:12.4f}')
-</pre>
+<footer>
+  Generated Gravity Calculation Website — Ready for GitHub Pages
+</footer>
 
-    <p>
-      <button id="downloadBtn">下載 Python 程式 (.py)</button>
-      <a class="button" href="#" id="runLink" onclick="alert('在瀏覽器中無法直接執行 Python；請下載後在本機 Python 3 執行。')">如何執行</a>
-    </p>
-  </section>
-
-  <script>
-    // 使用 JavaScript 將上方程式碼內容轉為檔案並觸發下載
-    document.getElementById('downloadBtn').addEventListener('click', function(){
-      const code = document.getElementById('pycode').textContent;
-      const blob = new Blob([code], {type: 'text/x-python;charset=utf-8'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'gravity_problem_8-2.py';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-  </script>
-
-  <footer>
-    本頁面可直接複製到 GitHub repository 做為說明檔案；若需我幫你把檔案寫入 repo 或做成 README 與結果表格，請告知。
-  </footer>
 </body>
 </html>
