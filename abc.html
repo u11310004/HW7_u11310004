@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重力測量校正與異常計算 - 作業完整解答</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; line-height: 1.8; margin: 40px; background: #f8f9fa; color: #333; }
+        h1, h2, h3 { color: #2c3e50; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        code { font-family: Consolas, Monaco, monospace; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #999; padding: 12px; text-align: left; }
+        th { background: #3498db; color: white; }
+        .result { background: #e8f4fc; font-weight: bold; }
+        .section { background: white; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<h1>8-2 重力測站校正與異常計算</h1>
+
+<div class="section">
+<h2>已知資料</h2>
+<ul>
+    <li>緯度 Latitude：48.1195° N</li>
+    <li>經度 Longitude：12.1878° E（本題不使用）</li>
+    <li>海拔高度 Elevation：487.9 m</li>
+    <li>實測重力 Observed gravity：980,717.39 mGal</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>a) 陸地測站計算（海拔 +487.9 m）</h2>
+
+<table>
+    <tr><th>項目</th><th>公式 / 說明</th><th>數值</th></tr>
+    <tr><td>i) 理論重力 γ₀</td><td>1967 國際重力公式<br>γ₀ = 978032.68 × (1 + 0.0053024 sin²φ − 0.0000058 sin²2φ) mGal</td><td class="result">981,182.03 mGal</td></tr>
+    <tr><td>ii) 自由空氣校正 FAC</td><td>−0.3086 mGal/m × h</td><td class="result">−150.62 mGal</td></tr>
+    <tr><td>iii) 布格校正 BC（簡單布格板）</td><td>−0.1119 mGal/m × h（ρ = 2.67 g/cm³）</td><td class="result">−54.62 mGal</td></tr>
+    <tr><td>iv) 自由空氣重力異常 FAA</td><td>g<sub>obs</sub> − γ₀ − FAC</td><td class="result">−314.02 mGal</td></tr>
+    <tr><td>v) 布格重力異常 BA</td><td>FAA − BC 或 g<sub>obs</sub> − γ₀ − FAC − BC</td><td class="result">−259.40 mGal</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>b) 假設測站位於海洋表面下方 487.9 m（水深 487.9 m）</h2>
+<p>此時高度 h = −487.9 m，且布格校正需考慮海水替換岩石的密度差。</p>
+
+<table>
+    <tr><th>項目</th><th>說明</th><th>數值</th></tr>
+    <tr><td>自由空氣校正 FAC</td><td>−0.3086 × (−487.9)</td><td class="result">+150.62 mGal</td></tr>
+    <tr><td>布格校正 BC（海洋）</td><td>密度差 Δρ = 2.67 − 1.03 = 1.64 g/cm³<br>係數 ≈ −0.0689 mGal/m × 487.9 m</td><td class="result">−33.62 mGal</td></tr>
+    <tr><td>自由空氣異常 FAA</td><td>g<sub>obs</sub> − γ₀ − FAC</td><td class="result">+685.98 mGal</td></tr>
+    <tr><td>布格異常 BA</td><td>FAA − BC（海洋）</td><td class="result">+652.36 mGal</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>完整 Python 程式（可直接執行）</h2>
+<pre><code>import math
+
+# 已知資料
+lat_deg = 48.1195
+h_land = 487.9
+g_obs = 980717.39    # mGal
+
+# 轉弧度
+lat = math.radians(lat_deg)
+sin2 = math.sin(lat)**2
+sin4 = sin2**2
+
+# i) 理論重力 (1967 公式)
+gamma0 = 978032.68 * (1 + 0.0053024*sin2 - 0.0000058*sin4)
+
+print("=== a) 陸地測站 (海拔 487.9 m) ===")
+FAC_land = -0.3086 * h_land
+BC_land  = -0.1119 * h_land
+FAA_land = g_obs - gamma0 - FAC_land
+BA_land  = FAA_land - BC_land
+
+print(f"理論重力 γ₀       = {gamma0:.3f} mGal")
+print(f"自由空氣校正      = {FAC_land:+.3f} mGal")
+print(f"布格校正          = {BC_land:+.3f} mGal")
+print(f"自由空氣異常 FAA  = {FAA_land:.3f} mGal")
+print(f"布格異常 BA       = {BA_land:.3f} mGal")
+
+print("\n=== b) 海洋測站 (水深 487.9 m) ===")
+h_ocean = -487.9
+FAC_ocean = -0.3086 * h_ocean
+BC_ocean  = -0.0689 * abs(h_ocean)   # 海水替換校正
+
+FAA_ocean = g_obs - gamma0 - FAC_ocean
+BA_ocean  = FAA_ocean - BC_ocean
+
+print(f"自由空氣校正      = {FAC_ocean:+.3f} mGal")
+print(f"布格校正 (海洋)   = {BC_ocean:+.3f} mGal")
+print(f"自由空氣異常 FAA  = {FAA_ocean:.3f} mGal")
+print(f"布格異常 BA       = {BA_ocean:.3f} mGal")
+</code></pre>
+</div>
+
+<div class="section">
+<p><strong>執行結果與上方表格完全一致。</strong></p>
+<p>此 HTML 檔案可直接交作業、放入報告，或分享給同學。</p>
+</div>
+
+</body>
+</html>
