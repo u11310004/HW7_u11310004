@@ -1,74 +1,75 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gravity Calculation HW 8-2</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    header { background: #003366; color: #fff; padding: 20px; text-align: center; }
-    main { max-width: 900px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
-    h1, h2 { color: #003366; }
-    pre { background: #eee; padding: 12px; border-radius: 6px; overflow-x: auto; }
-    .code-block { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; }
-    footer { text-align: center; color: #666; margin-top: 40px; padding: 20px; }
-    a.download { display: inline-block; padding: 10px 16px; background: #003366; color: #fff; text-decoration: none; border-radius: 6px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Calculation HW7</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<header>
-  <h1>Gravity Calculation Homework 8-2</h1>
-  <p>Based on GRS80 gravity model & Bouguer corrections</p>
-</header>
+    <div class="container">
+        <h1>HW7 – Gravity Calculation</h1>
+        <h2>Problem 8-2</h2>
 
-<main>
-  <h2>Problem Description</h2>
-  <p>Given a gravity station with the following properties:</p>
-  <ul>
-    <li>Latitude: 48.1195° N</li>
-    <li>Longitude: 12.1878° E</li>
-    <li>Elevation: 487.9 m</li>
-    <li>Observed gravity: 980,717.39 mGal</li>
-  </ul>
-  <p>Compute theoretical gravity, free-air correction, Bouguer correction, free-air anomaly, and Bouguer anomaly.</p>
+        <div class="card">
+            <h3>題目</h3>
+            <p>
+                Calculate the gravitational acceleration at a latitude of 45° on an oblate Earth using the Somigliana formula:
+            </p>
 
-  <h2>Python Code</h2>
-  <pre class="code-block">#!/usr/bin/env python3
+            <pre class="equation">
+g(φ) = gₑ * (1 + k·sin²φ) / √(1 - e²·sin²φ)
+            </pre>
+
+            <ul>
+                <li>gₑ = 9.7803253359 m/s²</li>
+                <li>k = 0.00193185265241</li>
+                <li>e² = 0.00669437999013</li>
+                <li>φ = 45°</li>
+            </ul>
+
+            <img src="assets/earth.png" class="illustration">
+        </div>
+
+        <div class="card">
+            <h3>Python 程式碼</h3>
+
+            <a href="gravity_calc.py" download class="download-btn">
+                下載 Python 程式
+            </a>
+
+            <pre class="code">
 import math
 
-def theoretical_gravity(lat_deg):
-    phi = math.radians(lat_deg)
-    g0 = 978032.677
-    g = g0 * (1 + 0.0053024*math.sin(phi)**2 - 0.0000058*math.sin(2*phi)**2)
-    return g
+g_e = 9.7803253359
+k = 0.00193185265241
+e2 = 0.00669437999013
 
-def free_air_correction(h_m):
-    return 0.3086 * h_m
+phi_deg = 45
+phi = math.radians(phi_deg)
 
-def bouguer_correction(h_m, density_kg_m3=2670):
-    rho_g_cm3 = density_kg_m3 / 1000.0
-    return 0.04193 * rho_g_cm3 * h_m
+g = g_e * (1 + k * math.sin(phi)**2) / math.sqrt(1 - e2 * math.sin(phi)**2)
 
-def compute_all(lat_deg, h_m, g_obs_mgal, rock_density=2670):
-    g_th = theoretical_gravity(lat_deg)
-    FAC = free_air_correction(h_m)
-    BC = bouguer_correction(h_m, rock_density)
-    free_air_anomaly = g_obs_mgal + FAC - g_th
-    bouguer_anomaly = g_obs_mgal + FAC - BC - g_th
-    return g_th, FAC, BC, free_air_anomaly, bouguer_anomaly
+print(f"Latitude = {phi_deg}°")
+print(f"Gravitational Acceleration g = {g:.10f} m/s^2")
+            </pre>
+        </div>
 
-if __name__ == "__main__":
-    lat = 48.1195
-    h = 487.9
-    g_obs = 980717.39
-    print(compute_all(lat, h, g_obs))</pre>
+        <div class="card">
+            <h3>計算結果</h3>
+            <p>執行結果如下：</p>
 
-  <p><a class="download" href="gravity_problem_8-2.py">Download Python Script</a></p>
-</main>
+            <pre class="output">
+Latitude = 45°
+Gravitational Acceleration g = 9.8061992033 m/s²
+            </pre>
+        </div>
 
-<footer>
-  Generated Gravity Calculation Website — Ready for GitHub Pages
-</footer>
+        <footer>
+            <p>Generated for HW7 – Gravity Calculation</p>
+        </footer>
 
+    </div>
 </body>
 </html>
